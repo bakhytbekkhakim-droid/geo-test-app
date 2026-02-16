@@ -3,53 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Interactive Satellite Map</title>
+    <title>Geo Satellite Map</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; background: #000; }
+        body, html { margin: 0; padding: 0; height: 100%; background: #000; overflow: hidden; }
         #map { width: 100%; height: 100vh; }
-        .status-bar { 
-            position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
-            background: rgba(0,0,0,0.7); color: white; padding: 10px 20px;
-            border-radius: 20px; z-index: 1000; font-family: sans-serif; pointer-events: none;
+        .status-label { 
+            position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8); color: white; padding: 10px 20px;
+            border-radius: 25px; z-index: 1000; font-family: sans-serif; 
+            font-size: 14px; pointer-events: none; border: 1px solid #444;
+            white-space: nowrap;
         }
     </style>
 </head>
 <body>
-    <div class="status-bar" id="status">📍 Картаны басып, нүкте қойыңыз</div>
+    <div class="status-label" id="status-bar">🌍 Картадан кез келген нүктені басыңыз</div>
     <div id="map"></div>
 
     <script>
+        // Telegram Web App интерфейсін іске қосу
         let tg = window.Telegram.WebApp;
-        tg.expand();
+        tg.expand(); // Тезені толық экранға ашу
 
-        // Картаны іске қосу
-        var map = L.map('map', { zoomControl: false }).setView([48, 67], 4);
+        // 1. Картаны бастапқы (Қазақстан) координатамен іске қосу
+        var map = L.map('map', { zoomControl: false }).setView([48.0196, 66.9237], 4);
 
-        // Спутник қабаты
+        // 2. Спутниктік қабатты (Esri World Imagery) қосу
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
             attribution: 'Esri World Imagery'
         }).addTo(map);
 
         var currentMarker;
 
-        // Картаны басқанда жұмыс істейтін функция
+        // 3. Картаны басқан кезде орындалатын функция
         map.on('click', function(e) {
             let lat = e.latlng.lat.toFixed(4);
             let lng = e.latlng.lng.toFixed(4);
             
-            // Ескі маркерді өшіру және жаңасын қою
-            if (currentMarker) map.removeLayer(currentMarker);
+            // Ескі маркер болса, оны өшіру
+            if (currentMarker) {
+                map.removeLayer(currentMarker);
+            }
+            
+            // Жаңа маркер (нүкте) қою
             currentMarker = L.marker([lat, lng]).addTo(map);
 
-            document.getElementById('status').innerText = `Жіберілуде: ${lat}, ${lng}`;
+            // Статус жазуын өзгерту
+            document.getElementById('status-bar').innerText = `Жіберілуде: ${lat}, ${lng}`;
 
-            // ⚠️ МАҢЫЗДЫ: Ботқа мәлімет жіберу
+            // ⚠️ Ботқа мәлімет жіберу (tg.sendData)
+            // Бұл функция орындалғанда Mini App автоматты түрде жабылады
             setTimeout(() => {
                 tg.sendData(`Координаталар: ${lat}, ${lng}`);
-            }, 500); 
+            }, 600); // Маркерді көріп үлгеру үшін кішкене кідіріс
         });
     </script>
 </body>
