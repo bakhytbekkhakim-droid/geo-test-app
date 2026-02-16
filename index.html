@@ -3,65 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Hybrid Geo Map</title>
+    <title>Geo Quest Map</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         body, html { margin: 0; padding: 0; height: 100%; background: #000; }
         #map { width: 100%; height: 100vh; }
-        .info-panel {
-            position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
-            z-index: 1000; background: rgba(0,0,0,0.85); color: white;
-            padding: 10px 20px; border-radius: 30px; font-family: sans-serif;
-            font-size: 14px; border: 1px solid #0088cc; white-space: nowrap;
+        .legend {
+            position: absolute; bottom: 20px; left: 10px; z-index: 1000;
+            background: rgba(0,0,0,0.8); color: white; padding: 10px;
+            border-radius: 10px; font-family: sans-serif; font-size: 12px;
         }
     </style>
 </head>
 <body>
-    <div class="info-panel" id="info">🌍 Елді немесе нысанды таңдаңыз</div>
+    <div class="legend">
+        🔴 Жанартаулар | 🔵 Шұңғымалар | 🟢 Шыңдар | 🟡 Бұғаздар/Каналдар
+    </div>
     <div id="map"></div>
 
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
 
-        var map = L.map('map', { zoomControl: false }).setView([48, 67], 3);
+        var map = L.map('map', { zoomControl: false }).setView([20, 0], 2);
 
-        // 1. ТӨМЕНГІ ҚАБАТ: Esri Спутниктік суреттері (Нысандарды тану үшін)
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
 
-        // 2. ЖОҒАРҒЫ ҚАБАТ: OpenStreetMap Labels (Қала аттары мен шекаралар)
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            opacity: 0.3, // Шекаралар тым қатты көрінбеуі үшін мөлдірлік
-            pane: 'markerPane' // Спутниктің үстінде тұруы үшін
-        }).addTo(map);
+        // Қызықты нүктелер базасы
+        const points = [
+            { name: "Мариан шұңғымасы", coords: [11.3493, 142.1996], color: "blue" },
+            { name: "Эверест шыңы", coords: [27.9881, 86.9250], color: "green" },
+            { name: "Килиманджаро жанартауы", coords: [-3.0674, 37.3556], color: "red" },
+            { name: "Панама каналы", coords: [9.1899, -79.8478], color: "yellow" },
+            { name: "Суэц каналы", coords: [30.5852, 32.2654], color: "yellow" },
+            { name: "Гибралтар бұғазы", coords: [35.9375, -5.4627], color: "yellow" },
+            { name: "Байкал көлі", coords: [53.5587, 108.1650], color: "blue" },
+            { name: "Везувий жанартауы", coords: [40.8167, 14.4289], color: "red" },
+            { name: "Амазонка өзені", coords: [-3.4653, -62.2159], color: "blue" },
+            { name: "Сахара шөлі", coords: [23.4162, 25.6627], color: "orange" }
+        ];
 
-        // 3. АЙМАҚТАРДЫ ТАНУ (GeoJSON)
-        fetch('https://raw.githubusercontent.com/datasets/geo-boundaries-world-110m/master/countries.geojson')
-            .then(res => res.json())
-            .then(data => {
-                L.geoJSON(data, {
-                    style: function() {
-                        return { color: "#00ffea", weight: 1, fillOpacity: 0.1 };
-                    },
-                    onEachFeature: function(feature, layer) {
-                        layer.on('click', function(e) {
-                            let name = feature.properties.name;
-                            document.getElementById('info').innerText = `Таңдалды: ${name}`;
-                            
-                            // Ботқа жіберу
-                            setTimeout(() => {
-                                tg.sendData(name);
-                            }, 500);
-                        });
-                        
-                        // Үстіне келгенде жарық болу (Hover effect)
-                        layer.on('mouseover', function() { this.setStyle({ fillOpacity: 0.3 }); });
-                        layer.on('mouseout', function() { this.setStyle({ fillOpacity: 0.1 }); });
-                    }
-                }).addTo(map);
+        // Нүктелерді картаға шығару
+        points.forEach(point => {
+            let marker = L.circleMarker(point.coords, {
+                radius: 8,
+                fillColor: point.color,
+                color: "#fff",
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 0.8
+            }).addTo(map);
+
+            marker.on('click', function() {
+                tg.sendData(point.name);
             });
+        });
+
+        // Кез келген басқа нүктені басқанда
+        map.on('click', function(e) {
+            let lat = e.latlng.lat.toFixed(4);
+            let lng = e.latlng.lng.toFixed(4);
+            tg.sendData(`Координата: ${lat}, ${lng}`);
+        });
     </script>
 </body>
 </html>
