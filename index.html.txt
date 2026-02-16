@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geo Mini App</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 20px; background-color: #f4f4f9; }
+        .btn { display: block; width: 100%; padding: 15px; margin: 10px 0; background: #0088cc; color: white; border: none; border-radius: 10px; font-size: 18px; }
+    </style>
+</head>
+<body>
+    <h1>🌍 Материкті таңдаңыз</h1>
+    <button class="btn" onclick="sendData('Евразия')">Евразия</button>
+    <button class="btn" onclick="sendData('Африка')">Африка</button>
+    <button class="btn" onclick="sendData('Солтүстік Америка')">Солтүстік Америка</button>
+
+    <script>
+        let tg = window.Telegram.WebApp;
+        tg.expand(); // Тезені толық ашу
+
+        function sendData(name) {
+            tg.sendData(name); // Ботқа мәлімет жіберу
+        }
+    </script>
+</body>
+</html>
